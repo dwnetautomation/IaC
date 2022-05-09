@@ -1,0 +1,20 @@
+---
+# Clean up config files
+
+- name: Remove senstive info from the device config
+  delegate_to: localhost
+  vars:
+    device_config_file: "{{ base_dir }}/field_config/{{ node_id }}/{{ inventory_hostname }}"
+  # lineinfile:
+  replace:
+    path: "{{ device_config_file }}"
+    regexp: "{{ item }} .*"
+    replace: "{{ item }} Removed_Per_Security_Policy"
+  loop:
+    - "password"
+    - "secret"
+    - "VRF-MGMT key"
+    - "authentication-key"
+  tags:
+  - never
+  - get_facts

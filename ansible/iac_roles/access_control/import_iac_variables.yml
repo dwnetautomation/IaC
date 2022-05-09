@@ -1,0 +1,52 @@
+---
+# tasks file for net.common
+
+- name: Always include node template
+  set_fact:
+    template_names: "{{ template_names + [node_id] }}"
+  when: node_id != ''
+
+- name: Include additional templates if they are defined by "template" variable
+  set_fact:
+    template_names: "{{ template_names + template.split('|') }}"
+  when: template is defined
+
+- name: Make sure device config output dirctories exists in config/prod/node_id/hostname
+  delegate_to: localhost
+  file:
+    path: "{{ base_dir }}/config/prod/{{ node_id }}/{{ inventory_hostname }}/{{ item }}"
+    state: directory
+  loop:
+  - "segments"
+  - "combined_with_templates"
+  register: conf_output_dirs
+  when: node_id != ''
+  no_log: true
+
+- name: Import device template IaC variables from template_iac_devices_file_names variable
+  vars:
+    template_name_and_os: "{{ item + '/' + ansible_network_os }}"
+  include_vars:
+    file: "{{ all_template_iac_device_file_map[template_name_and_os] }}"
+    name: "my_template_iac_device"
+  loop: "{{ template_names }}"
+  when: all_template_iac_device_file_map[template_name_and_os] is defined
+  register: device_template_vars
+
+- name: Check device's own IaC file stat
+  delegate_to: localhost
+  stat:
+    path: "{{ base_dir + '/devices/prod/' + node_id + '/' + inventory_hostname + '/device.yml' }}"
+  register: device_iac_file_output
+  when: node_id != ''
+  
+- name: Import device's own IAC variable
+  include_vars:
+    file: "{{ device_iac_file_output.stat.path }}"
+    name: "local_iac_device"
+  when: device_iac_file_output.stat.exists == True
+
+- name: Build iac_devices_list by combine local_iac_device and template_iac_devices
+  set_fact:
+    iac_devices_list: "{{ iac_devices_list + template_iac_devices + [local_iac_device]}}"
+  when: local_iac_device is defined

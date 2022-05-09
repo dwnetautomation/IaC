@@ -1,0 +1,37 @@
+---
+- name: "create next available awx ci v4 /31 child prefix - {{ cust }} - {{ dcc }} - {{ node_id }}"
+  delegate_to: localhost
+  run_once: true  
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    nb_tag: "{{ lookup('vars', 'nb_tag_' + node_id) }}"
+    nb_vlan_bysite: "{{ lookup('vars', 'nb_vlan_' + node_id) }}"
+    pfx_name: "awx_dc_{{ cust }}_{{ dcc }}_{{ node_id }}_vlan({{ nb_vlan_bysite }})"
+  uri:
+    timeout: 180
+    status_code: 201
+    url: "{{ netbox_settings.httpshost }}api/ipam/prefixes/901/available-prefixes/"
+    method: POST
+    headers:
+      Content-Type: application/json
+      Authorization: Token {{ netbox_settings.token }}
+    body: '{"prefix_length": 31, "tags": [{"name": "{{ nb_tag }}"}, {"slug": "{{ nb_tag }}"}], "description": "{{ pfx_name }}", "name": "{{ pfx_name }}"}'
+    body_format: json
+    return_content: yes
+  register: data
+  any_errors_fatal: true
+  tags:
+  - never
+  - chkvid
+  - prov
+
+- name: "set v4 prefix var - {{ cust }} - {{ dcc }} - {{ node_id }}"
+  delegate_to: localhost
+  run_once: true
+  set_fact:
+    nb_v4px_{{ node_id }}: "{{ data.json.prefix }}"
+  any_errors_fatal: true
+  tags:
+  - never
+  - chkvid
+  - prov

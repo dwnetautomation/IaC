@@ -1,0 +1,21 @@
+---
+- name: "get next available {{ dcc }} customer vlan id for site {{ node_id }} from netbox"
+  delegate_to: localhost
+  run_once: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  set_fact:
+    nb_vlan_{{ node_id }}: >-
+            {{ query('netbox.netbox.nb_lookup', 'vlans',
+            api_filter='tag=available-' + dcc|quote + '-cv-' + node_id|quote,
+            api_endpoint=netbox_settings.httpshost,
+            token=netbox_settings.token)
+            | json_query('[0].value.vid') }}
+    nb_void_{{ node_id }}: >-
+            {{ query('netbox.netbox.nb_lookup', 'vlans',
+            api_filter='tag=available-' + dcc|quote + '-cv-' + node_id|quote,
+            api_endpoint=netbox_settings.httpshost,
+            token=netbox_settings.token)
+            | json_query('[0].value.id') }}
+    nb_tag_{{ node_id }}: "awx_dc_cust_{{ dcc }}_{{ node_id }}"
+  any_errors_fatal: true

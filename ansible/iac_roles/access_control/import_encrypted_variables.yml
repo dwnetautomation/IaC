@@ -1,0 +1,15 @@
+---
+# Import encrypted variable from vault_encrypted_vars.yml
+
+- name: Include encrypted variables
+  include_vars:
+    file: "{{ base_dir }}/vault_encrypted_vars.yml"
+  when: encrypted_vars_stat_result.stat.exists
+  no_log: true
+
+- name: Set ansible_user info
+  set_fact:
+    ansible_user: "{{ active_service_account }}"
+    ansible_password: "{{ active_service_account_password }}"
+  when: active_service_account is defined and active_service_account_password is defined
+  no_log: true

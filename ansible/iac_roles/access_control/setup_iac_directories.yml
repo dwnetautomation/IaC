@@ -1,0 +1,99 @@
+---
+# tasks file for net.common
+
+- name: Add "node_id" to the all_template_names
+  set_fact:
+    all_template_names: "{{ all_template_names + all_node_id.split('|') }}"
+  when: all_node_id is defined
+  run_once: true
+
+- name: Add customer defined templates to the all_template_names
+  set_fact:
+    all_template_names: "{{ all_template_names + all_template.split('|') }}"
+  when: all_template is defined
+  run_once: true
+   
+- name: Create Directory Structure for field configs if they don't exist
+  delegate_to: localhost
+  file:
+    path: "{{ base_dir }}/{{ item }}"
+    state: directory
+    mode: '0777'
+  with_items:
+  - field_config
+  - summary
+  run_once: true
+
+- name: Create Directory Structure for node_id under field_config directory if they don't exist
+  delegate_to: localhost
+  file:
+    path: "{{ base_dir }}/field_config/{{ item }}"
+    state: directory
+    mode: '0777'
+  with_items: "{{ all_node_id.split('|') }}"
+  when: all_node_id is defined
+  run_once: true
+
+- name: Create device_info summary file if it doesn't exist
+  delegate_to: localhost
+  file:
+    path: "{{ base_dir }}/summary/{{ item }}"
+    state: touch
+    mode: '0666'
+  with_items:
+    - devices_facts.csv
+  run_once: true
+
+- name: Add header to devices_facts.csv file
+  delegate_to: localhost
+  lineinfile:
+    path: "{{ base_dir }}/summary/devices_facts.csv"
+    line: "fqdn,mgmt_ip_addr,status,manufacturer,os_name,os_version,model,serial_number,last_reboot_date"
+    insertbefore: BOF
+  run_once: true
+
+- name: Fine all template iac device files
+  delegate_to: localhost
+  find:
+    paths: "{{ base_dir }}/devices/templates"
+    file_type: file
+    patterns: "device.yml"
+    recurse: yes
+  register: template_iac_device_files_out
+  run_once: true
+
+- name: Generate all_template_iac_device_file_map facts with template_name_and_os as key
+  delegate_to: localhost
+  vars:
+    template_name_and_os: "{{ item.path.split('devices/templates/')[1].split('/device.yml')[0] }}"
+  set_fact:
+    all_template_iac_device_file_map: "{{ all_template_iac_device_file_map | combine ({template_name_and_os: item.path}) }}"
+  loop: "{{ template_iac_device_files_out.files }}"
+  when: item.path.split('devices/templates/') | length > 1
+  no_log: true
+  run_once: true
+
+- name: Generate all_template_iac_device var list
+  include_vars:
+    file: "{{ item.value }}"
+    name: "my_template_iac_device"
+  loop: "{{ all_template_iac_device_file_map|dict2items }}"
+  when: all_template_iac_device_file_map is defined
+  register: all_device_template_vars
+  no_log: true
+  run_once: true
+
+- name: Build template_iac_devices list
+  set_fact:
+    template_iac_devices: "{{ template_iac_devices + [item.ansible_facts.my_template_iac_device] }}"
+  loop: "{{ all_device_template_vars.results }}"
+  when: item.ansible_facts.my_template_iac_device is defined
+  run_once: true 
+  no_log: true
+
+- name: check if vault_encrypted_vars.yml file exist
+  delegate_to: localhost
+  stat:
+    path: "{{ base_dir }}/vault_encrypted_vars.yml"
+  register: encrypted_vars_stat_result
+  run_once: true

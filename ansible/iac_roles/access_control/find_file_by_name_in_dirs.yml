@@ -1,0 +1,21 @@
+---
+
+- name: Find files by name in directories
+  delegate_to: localhost
+  find:
+    paths: "{{ template_dir }}"
+    file_type: file
+    patterns: "{{ conf_segment_map.key }}.txt"
+  loop: "{{ my_file_names }}"
+  loop_control:
+    loop_var: conf_segment_map
+  register: find_files_by_name_out
+
+- name: Update template_config_segment_files_map
+  vars:
+    conf_segname_name: "{{ item.conf_segment_map.key }}"
+    my_list: "{%if template_config_segment_files_map[conf_segname_name] is defined %}{{ template_config_segment_files_map[conf_segname_name] }}{% else %}{{ [] }}{% endif %}"
+  set_fact:
+    template_config_segment_files_map: "{{ template_config_segment_files_map | combine({conf_segname_name: my_list+[item.files[0].path]}) }}"
+  when: (find_files_by_name_out.results | length != 0) and (item.files | length != 0)
+  loop: "{{ find_files_by_name_out.results }}"

@@ -1,0 +1,11 @@
+---
+# Clean up config files
+
+- name: Remove lines with whitespaces only
+  delegate_to: localhost
+  lineinfile:
+    dest: "{{ my_file }}"
+    regexp: '^$|^[ \t]+$'
+    state: absent
+  tags:
+  - always

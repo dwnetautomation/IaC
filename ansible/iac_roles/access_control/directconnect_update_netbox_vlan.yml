@@ -1,0 +1,24 @@
+---
+- name: "update netbox vlan - {{ dcc }} - {{ node_id }}"
+  delegate_to: localhost
+  run_once: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    nb_void: "{{ lookup('vars', 'nb_void_' + node_id) }}"
+    nb_tag: "{{ lookup('vars', 'nb_tag_' + node_id) }}"
+  uri:
+    timeout: 180
+    url: "{{ netbox_settings.httpshost }}api/ipam/vlans/{{ nb_void }}/"
+    method: PATCH
+    headers:
+      Content-Type: application/json
+      Authorization: Token {{ netbox_settings.token }}
+    body: '{"tags": [{"name": "{{ nb_tag }}"}, {"slug": "{{ nb_tag }}"}], "description": "{{ cust }}", "name": "{{ cust }}"}'
+    body_format: json
+    return_content: yes
+  register: nb_vlan_update
+  any_errors_fatal: true  
+  tags:
+  - never
+  - chkvid
+  - prov
