@@ -1,0 +1,23 @@
+---
+- name: "add {{ node_id }} {{ dcc }} {{ cust }} vlan to cas switch"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+    nb_vlan_bysite: "{{ lookup('vars', 'nb_vlan_' + node_id) }}"
+  eos_vlan:
+    vlan_id: "{{ nb_vlan_bysite }}"
+    name: "{{ item }}"
+    state: present
+  connection: network_cli
+  with_items:
+    - "{{ cust }}"
+  register: result
+
+- name: "write mem on {{ node_id }} cas switch"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+  eos_config:
+    save_when: modified
+  connection: network_cli
+

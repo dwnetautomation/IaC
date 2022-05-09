@@ -1,0 +1,24 @@
+---
+- name: "set_commands"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+  junos_config:
+    config_mode: private
+    lines:
+    - "{{ item }}"
+  connection: netconf
+  register: response
+  with_items:
+    - ["{{ set_cmds }}"]
+  tags:
+  - never
+  - set_cmds
+
+- name: save config
+  import_tasks: save_config.yml
+  tags:
+  - never
+  - set_cmds
+
+

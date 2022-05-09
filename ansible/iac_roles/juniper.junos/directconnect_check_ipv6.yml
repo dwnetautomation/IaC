@@ -1,0 +1,26 @@
+---
+- import_role:
+    name: Juniper.junos
+
+- name: "check gre {{ inventory_hostname }} - confirm new {{ dcc }} direct-connect ipv6 ip {{ lookup('vars', 'nb_v6px_' + node_id) }} is available"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    nb_v6px_bysite: "{{ lookup('vars', 'nb_v6px_' + node_id) }}"
+  connection: netconf
+  juniper_junos_config:
+    config_mode: private      
+    retrieve: "committed"
+    format: "xml"
+    filter: >
+      <interfaces><interface><unit><family><inet6><address><name>{{ nb_v6px_bysite }}</name>
+      </address></inet6></family></unit></interface></interfaces>
+  register: int_ipv6_data
+
+- name: "fail workflow if new {{ node_id }} {{ dcc }} directconnect ipv6 ip {{ lookup('vars', 'nb_v6px_' + node_id) }} is already in use"
+  vars:
+    j_ipv6_avail: "available"
+    nb_v6px_bysite: "{{ lookup('vars', 'nb_v6px_' + node_id) }}"
+  set_fact:
+    v6_chk_gre: "{{ int_ipv6_data.config_parsed.configuration.interfaces.interface.unit.family.inet6.address.name|default(j_ipv6_avail) }}"
+  failed_when: v6_chk_gre == nb_v6px_bysite
+

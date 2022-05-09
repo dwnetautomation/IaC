@@ -1,0 +1,95 @@
+---
+- import_role:
+    name: Juniper.junos
+
+- name: "create dc customer {{ cust }} config update destination dir"
+  delegate_to: localhost
+  file:
+    path: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}"
+    state: directory
+
+- name: "update gre {{ inventory_hostname }} config from j2 template - directconnect customer: {{ cust }} - {{ dcc }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null"
+    nb_vlan_bysite: "{{ lookup('vars', 'nb_vlan_' + node_id) }}"
+    nb_v4px_bysite: "{{ lookup('vars', 'nb_v4px_' + node_id) }}"
+    nb_v6px_bysite: "{{ lookup('vars', 'nb_v6px_' + node_id) }}"
+    nb_v4peer_bysite: "{{ (lookup('vars', 'nb_v4px_' + node_id)).split('/')[0] | ipmath(1) }}"
+    nb_v6peer_bysite: "{{ (lookup('vars', 'nb_v4px_' + node_id)).split('/')[0] | ipmath(1) }}"
+  juniper_junos_config:
+    load: merge
+    config_mode: private
+    format: set
+    diff: yes
+    dest_dir: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}"
+    template: "{{ role_path }}/templates/dc_gre_cust_template.j2"
+    vars:
+      cust: "{{ cust }}"
+      dcc: "{{ dcc }}"
+      node_id: "{{ node_id }}"
+      dc_mlag: "{{ dc_mlag }}"
+      #dc_asn_bysite: "{{ lookup('vars', 'dc_asn_' + node_id) }}"
+      dc_asn_bysite: "{{ dc_asn_bysite }}"
+      nb_vlan_bysite: "{{ nb_vlan_bysite }}"
+      nb_v4px_bysite: "{{ nb_v4px_bysite }}"
+      nb_v6px_bysite: "{{ nb_v6px_bysite }}"
+      nb_v4peer_bysite: "{{ nb_v4peer_bysite }}"
+      nb_v6peer_bysite: "{{ nb_v6peer_bysite }}"
+  connection: netconf
+  register: response
+
+- name: "print the config changes"
+  debug:
+    var: response.diff_lines
+
+- name: "add diff type and date time stamp to diff filename"
+  vars:
+    dirpath: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}"
+    datetime: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+  delegate_to: localhost
+  command: "mv {{ dirpath }}/{{ inventory_hostname }}.diff {{ dirpath }}/{{ inventory_hostname }}_j2tconf.diff.{{ datetime }}"
+
+- name: "save gre {{ inventory_hostname }} config set update - directconnect customer: {{ cust }} - {{ dcc }}"
+  delegate_to: localhost
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null"
+    #dc_asn_bysite: "{{ lookup('vars', 'dc_asn_' + node_id) }}"
+    nb_vlan_bysite: "{{ lookup('vars', 'nb_vlan_' + node_id) }}"
+    nb_v4px_bysite: "{{ lookup('vars', 'nb_v4px_' + node_id) }}"
+    nb_v6px_bysite: "{{ lookup('vars', 'nb_v6px_' + node_id) }}"
+    nb_v4peer_bysite: "{{ (lookup('vars', 'nb_v4px_' + node_id)).split('/')[0] | ipmath(1) }}"
+    nb_v6peer_bysite: "{{ (lookup('vars', 'nb_v4px_' + node_id)).split('/')[0] | ipmath(1) }}"
+  template:
+    src: "templates/dc_gre_cust_template.j2"
+    dest: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}/{{ inventory_hostname }}.set"
+
+- name: "copy gre {{ inventory_hostname }} config-set-update file to config-delete-update file - directconnect customer: {{ cust }} - {{ dcc }}"
+  delegate_to: localhost
+  ansible.builtin.copy:
+    src: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}/{{ inventory_hostname }}.set"
+    dest: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}/{{ inventory_hostname }}.del"
+
+- name: "add set type and date time stamp to set filename"
+  vars:
+    dirpath: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}"
+    datetime: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+  delegate_to: localhost
+  command: "mv {{ dirpath }}/{{ inventory_hostname }}.set {{ dirpath }}/{{ inventory_hostname }}_j2tconf.set.{{ datetime }}"
+
+- name: "replace gre {{ inventory_hostname }} config set commands with config delete commands in config-delete-update file - directconnect customer: {{ cust }} - {{ dcc }}"
+  delegate_to: localhost
+  ansible.builtin.replace:
+    path: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}/{{ inventory_hostname }}.del"
+    regexp: 'set '
+    replace: 'delete '
+
+- name: "add del type and date time stamp to del filename"
+  vars:
+    dirpath: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}"
+    datetime: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+  delegate_to: localhost
+  command: "mv {{ dirpath }}/{{ inventory_hostname }}.del {{ dirpath }}/{{ inventory_hostname }}_j2conf.del.{{ datetime }}"
+
+

@@ -1,0 +1,24 @@
+---
+- name: "del_prefix_AWXNOANNOUNCE-NTT"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+  junos_config:
+    lines:
+    - "del policy-options prefix-list AWXNOANNOUNCE-NTT {{ item }}"
+  connection: netconf
+  register: response
+  with_items:
+    - "{{ prefixes.split('\n') }}"
+  tags:
+  - never
+  - dp_nan
+      
+- name: "Print the config changes"
+  debug:
+    var: response
+  tags:
+  - never
+  - dp_nan
+
+

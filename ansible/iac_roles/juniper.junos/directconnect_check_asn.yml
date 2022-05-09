@@ -1,0 +1,143 @@
+---
+- import_role:
+    name: Juniper.junos
+
+- name: "get {{ cust }} routing-instance bgp policy v4pfx data from {{ inventory_hostname }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+    vrf_bgp_policy_v4pfx: "{{ cust + '-' + dc_asn_bysite }}"
+  juniper_junos_config:
+    config_mode: private
+    retrieve: "committed"
+    format: "xml"
+    filter: <policy-options><prefix-list><name>{{ vrf_bgp_policy_v4pfx }}</name></prefix-list></policy-options>
+  connection: netconf
+  register: vrf_bgp_policy_v4pfx_data
+
+- name: "check if {{ cust }} routing-instance bgp policy v4pfx is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_policy_v4pfx_def: not_found
+  set_fact:
+    vrf_bgp_policy_v4pfx: "{{ vrf_bgp_policy_v4pfx_data.config_parsed.configuration['policy-options']['prefix-list'].name|default(vrf_bgp_policy_v4pfx_def) }}"
+
+- name: "get {{ cust }} routing-instance bgp policy v6pfx data from {{ inventory_hostname }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+    vrf_bgp_policy_v6pfx: "{{ cust + '-v6-' + dc_asn_bysite }}"
+  juniper_junos_config:
+    config_mode: private
+    retrieve: "committed"
+    format: "xml"
+    filter: <policy-options><prefix-list><name>{{ vrf_bgp_policy_v6pfx }}</name></prefix-list></policy-options>
+  connection: netconf
+  register: vrf_bgp_policy_v6pfx_data
+
+- name: "check if {{ cust }} routing-instance bgp policy v6pfx is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_policy_v6pfx_def: not_found
+  set_fact:
+    vrf_bgp_policy_v6pfx: "{{ vrf_bgp_policy_v6pfx_data.config_parsed.configuration['policy-options']['prefix-list'].name|default(vrf_bgp_policy_v6pfx_def) }}"
+
+- name: "get {{ cust }} routing-instance bgp policy data from {{ inventory_hostname }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+    vrf_bgp_policy: "{{ cust + '-' + dc_asn_bysite + '-in' }}"
+  juniper_junos_config:
+    config_mode: private
+    retrieve: "committed"
+    format: "xml"
+    filter: <policy-options><policy-statement><name>{{ vrf_bgp_policy }}</name></policy-statement></policy-options>
+  connection: netconf
+  register: vrf_bgp_policy_data
+
+- name: "check if {{ cust }} routing-instance bgp policy is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_policy_def: not_found
+  set_fact:
+    vrf_bgp_policy: "{{ vrf_bgp_policy_data.config_parsed.configuration['policy-options']['policy-statement'].name|default(vrf_bgp_policy_def) }}"
+
+- name: "get {{ cust }} routing-instance bgp group data from {{ inventory_hostname }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+    vrf_bgp_group: "{{ cust + '-' + dc_asn_bysite }}"
+  juniper_junos_config:
+    config_mode: private
+    retrieve: "committed"
+    format: "xml"
+    filter: <routing-instances><instance><protocols><bgp><group><name>{{ vrf_bgp_group }}</name></group></bgp></protocols></instance></routing-instances>
+  connection: netconf
+  register: vrf_bgp_group_data
+
+- name: "check if {{ cust }} routing-instance bgp group is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_def: not_found
+  set_fact:
+    vrf_bgp_group: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group.name|default(vrf_bgp_group_def) }}"
+
+- name: "check if {{ cust }} routing-instance bgp group type external is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_type_def: not_found
+  set_fact:
+    vrf_bgp_group_type: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group.type|default(vrf_bgp_group_type_def) }}"
+  when: vrf_bgp_group != "not_found"
+
+- name: "check if {{ cust }} routing-instance bgp group advertise-inactive is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_advertise_inactive_def: not_found
+  set_fact:
+    vrf_bgp_group_advertise_inactive: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group['advertise-inactive']|default(vrf_bgp_group_advertise_inactive_def) }}"
+  when: vrf_bgp_group != "not_found"
+
+- name: "check if {{ cust }} routing-instance bgp group mtu-discovery is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_mtu_discovery_def: not_found
+  set_fact:
+    vrf_bgp_group_mtu_discovery: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group['mtu-discovery']|default(vrf_bgp_group_mtu_discovery_def) }}"
+  when: vrf_bgp_group != "not_found"
+
+- name: "check if {{ cust }} routing-instance bgp group imports are pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_import_def: not_found
+  set_fact:
+    vrf_bgp_group_import: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group.import|default(vrf_bgp_group_import_def) }}"
+  when: vrf_bgp_group != "not_found"
+
+- name: "check if {{ cust }} routing-instance bgp group pfxlimits are pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_pfxlimit_def: not_found
+  set_fact:
+    vrf_bgp_group_pfxlimit: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group.family.inet.unicast['prefix-limit']|default(vrf_bgp_group_pfxlimit_def) }}"
+  when: vrf_bgp_group != "not_found"
+
+- name: "check if {{ cust }} routing-instance bgp group export is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_export_def: not_found
+  set_fact:
+    vrf_bgp_group_export: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group.export|default(vrf_bgp_group_export_def) }}"
+  when: vrf_bgp_group != "not_found"
+
+- name: "check if {{ cust }} routing-instance bgp group remove-private is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_rmpriv_def: not_found
+  set_fact:
+    vrf_bgp_group_rmpriv: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group['remove-private']|default(vrf_bgp_group_rmpriv_def) }}"
+  when: vrf_bgp_group != "not_found"
+
+- name: "check if {{ cust }} routing-instance bgp group peer-as is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_peeras_def: not_found
+  set_fact:
+    vrf_bgp_group_peeras: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group['peer-as']|default(vrf_bgp_group_peeras_def) }}"
+  when: vrf_bgp_group != "not_found"
+
+- name: "check if {{ cust }} routing-instance bgp group multipath is pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_bgp_group_multipath_def: not_found
+  set_fact:
+    vrf_bgp_group_multipath: "{{ vrf_bgp_group_data.config_parsed.configuration['routing-instances'].instance.protocols.bgp.group.multipath|default(vrf_bgp_group_multipath_def) }}"
+  when: vrf_bgp_group != "not_found"
+

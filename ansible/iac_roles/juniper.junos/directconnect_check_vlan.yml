@@ -1,0 +1,26 @@
+---
+- import_role:
+    name: Juniper.junos
+
+- name: "check {{ inventory_hostname }} - confirm new {{ dcc }} direct-connect vlan {{ lookup('vars', 'nb_vlan_' + node_id) }} is available - mlag int {{ dc_mlag }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null"
+    nb_vlan_bysite: "{{ lookup('vars', 'nb_vlan_' + node_id) }}"
+    j_vid_avail: available
+  juniper_junos_config:
+    config_mode: private
+    retrieve: "committed"
+    format: "xml"
+    filter: <interfaces><interface><unit><vlan-id>{{ nb_vlan_bysite }}</vlan-id></unit></interface></interfaces>
+  connection: netconf
+  register: int_vlan_data
+
+- name: "fail workflow if new {{ node_id }} {{ dcc }} directconnect vlan {{ lookup('vars', 'nb_vlan_' + node_id) }} is already in use"
+  vars:
+    j_vid_avail: available
+    nb_vlan_bysite: "{{ lookup('vars', 'nb_vlan_' + node_id) }}"
+  set_fact:
+    vid_chk_gre: "{{ int_vlan_data.config_parsed.configuration.interfaces.interface.unit.name|default(j_vid_avail) }}"
+  failed_when: vid_chk_gre == nb_vlan_bysite
+

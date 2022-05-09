@@ -1,0 +1,26 @@
+---
+- import_role:
+    name: Juniper.junos
+
+- name: "check gre {{ inventory_hostname }} - confirm new {{ dcc }} direct-connect ipv4 ip {{ lookup('vars', 'nb_v4px_' + node_id) }} is available"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    nb_v4px_bysite: "{{ lookup('vars', 'nb_v4px_' + node_id) }}"
+  connection: netconf
+  juniper_junos_config:
+    config_mode: private
+    retrieve: "committed"
+    format: "xml"
+    filter: >
+      <interfaces><interface><unit><family><inet><address><name>{{ nb_v4px_bysite }}</name>
+      </address></inet></family></unit></interface></interfaces>
+  register: int_ipv4_data
+
+- name: "fail workflow if new {{ node_id }} {{ dcc }} directconnect ipv4 ip {{ lookup('vars', 'nb_v4px_' + node_id) }} is already in use"
+  vars:
+    j_ipv4_avail: "available"
+    nb_v4px_bysite: "{{ lookup('vars', 'nb_v4px_' + node_id) }}"
+  set_fact:
+    v4_chk_gre: "{{ int_ipv4_data.config_parsed.configuration.interfaces.interface.unit.family.inet.address.name|default(j_ipv4_avail) }}"
+  failed_when: v4_chk_gre == nb_v4px_bysite
+

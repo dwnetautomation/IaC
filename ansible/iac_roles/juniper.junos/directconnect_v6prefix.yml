@@ -1,0 +1,63 @@
+---
+- import_role:
+    name: Juniper.junos
+
+- name: "create command string prepend - ipv6 prefix(es)"
+  set_fact: prefix={{ 'set policy-options prefix-list ' + cust + '-v6-' + dc_asn_bysite + ' ' }}
+- name: "create list of full set commands - ipv6 prefix(es)"
+  set_fact: dc_v6pfxcmds_bysite={{ [prefix] | product(dc_v6pfxs_bysite.split('\n')) | map('join') | list }}
+
+- name: "add optional gre {{ inventory_hostname }} {{ dcc }} directconnect ipv6 prefix-list prefix(es) - customer: {{ cust }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null"
+    #dc_asn_bysite: "{{ lookup('vars', 'dc_asn_' + node_id) }}"
+    #dc_v6pfxs_bysite: "{{ lookup('vars', 'dc_v6pfxs_' + node_id) }}"
+  juniper_junos_config:
+    config_mode: "private"
+    load: "set"
+    lines:
+      - "{{ item }}"
+  connection: netconf
+  register: response
+  with_items:
+    - "{{ dc_v6pfxcmds_bysite }}"
+
+- name: "config update output"
+  debug:
+    msg: "{{ (response | json_query('results[*].diff_lines')) }}"
+    
+- name: "save optional {{ inventory_hostname }} - {{ dcc }} - {{ cust }} v6pfxs-set-update"
+  delegate_to: localhost
+  ansible.builtin.copy:
+   content: "{{ dc_v6pfxcmds_bysite | join('\n') }}"
+   dest: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}/{{ inventory_hostname }}_v6pfxs.set"
+
+- name: "copy optional {{ inventory_hostname }} - {{ dcc }} - {{ cust }} v6pfxs-set-update file to v6pfxs-del-update file"
+  vars:
+    datetime: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+  delegate_to: localhost
+  ansible.builtin.copy:
+    src: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}/{{ inventory_hostname }}_v6pfxs.set"
+    dest: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}/{{ inventory_hostname }}_v6pfxs.del"
+
+- name: "replace optional {{ inventory_hostname }} - {{ dcc }} - {{ cust }} v6 prefix(es) set commands with delete commands in v6pfxs-del-update file"
+  delegate_to: localhost
+  ansible.builtin.replace:
+    path: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}/{{ inventory_hostname }}_v6pfxs.del"
+    regexp: 'set '
+    replace: 'delete '
+
+- name: "add date time stamp to v6pfxs-set-update filename"
+  vars:
+    dirpath: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}"
+    datetime: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+  delegate_to: localhost
+  command: "mv {{ dirpath }}/{{ inventory_hostname }}_v6pfxs.set {{ dirpath }}/{{ inventory_hostname }}_v6pfxs.set.{{ datetime }}"
+
+- name: "add date time stamp to v6pfxs-del-update filename"
+  vars:
+    dirpath: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}"
+    datetime: "{{ lookup('pipe','date +%Y%m%d%H%M%S') }}"
+  delegate_to: localhost
+  command: "mv {{ dirpath }}/{{ inventory_hostname }}_v6pfxs.del {{ dirpath }}/{{ inventory_hostname }}_v6pfxs.del.{{ datetime }}"

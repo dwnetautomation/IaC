@@ -1,0 +1,21 @@
+---
+- name: Save running config under field_config directory and on device locally
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+  eos_config:
+    backup: true
+    backup_options:
+      dir_path: "{{ base_dir + '/field_config/' + node_id }}"
+      filename: "{{ inventory_hostname }}"
+    save_when: modified
+  connection: network_cli
+  when: ansible_network_os == "eos"
+  tags:
+  - never
+  - pUsh_cOnfIg
+  - chAnGe_ServIce_AccOunT_PassWord
+  - eos_config
+  - eos_vlan
+
+  

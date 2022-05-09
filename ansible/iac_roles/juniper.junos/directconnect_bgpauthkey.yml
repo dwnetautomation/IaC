@@ -1,0 +1,23 @@
+---
+- import_role:
+    name: Juniper.junos
+
+- name: "add optional {{ node_id }} gre {{ dcc }} directconnect bgp md5 auth key - customer: {{ cust }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null"
+    #dc_asn_bysite: "{{ lookup('vars', 'dc_asn_' + node_id) }}"
+    #dc_authkey_bysite: "{{ lookup('vars', 'dc_authkey_' + node_id) }}"
+    authcmd: "set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} authentication-key {{ dc_authkey_bysite }}"
+  juniper_junos_config:
+    config_mode: "private"
+    load: "set"
+    lines:
+      - "{{ authcmd }}"
+  connection: netconf  
+  register: response
+
+- name: "config update output"
+  debug:
+    var: response
+

@@ -1,0 +1,24 @@
+---
+- name: "add_prefix_AWXSUPPRESS-COGENT-ALL"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+  junos_config:
+    lines:
+    - "set policy-options prefix-list AWXSUPPRESS-COGENT-ALL {{ item }}"
+  connection: netconf
+  register: response
+  with_items:
+    - "{{ prefixes.split('\n') }}"
+  tags:
+  - never
+  - ap_sca
+      
+- name: "Print the config changes"
+  debug:
+    var: response
+  tags:
+  - never
+  - ap_sca
+
+

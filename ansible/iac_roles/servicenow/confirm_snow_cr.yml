@@ -1,0 +1,59 @@
+---
+- name: "confirm service now change request"
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+    - name: "return user record"
+      snow_record_find:
+        username: '{{ lookup("env", "ANSIBLE_NET_USERNAME") }}'
+        password: '{{ lookup("env", "ANSIBLE_NET_PASSWORD") }}'
+        instance: neustar
+        table: change_request
+        query:
+          number: "{{ item }}"
+        return_fields:
+          - active
+          - approval
+          - start_date
+          - end_date
+      register: response
+          with_items:
+        - "{{ snow_cr }}"
+      tags:
+      - never
+      - sn_api
+      run_once: True
+
+    - name: "print the record field values"
+      debug:
+        var: response.results[0].record[0]
+      tags:
+      - never
+      - sn_api
+      run_once: True
+
+    - name: "verify active field condition"
+      fail:
+        msg: "{{ item }} is not active"
+      when: response.results[0].record[0].approval != "true"
+      with_items:
+        - "{{ snow_cr }}"
+      tags:
+      - never
+      - sn_api
+      run_once: True
+
+    - name: "verify approval field condition"
+      fail:
+        msg: "{{ item }} is not approved"
+      when: response.results[0].record[0].approval != "approved"
+      with_items:
+        - "{{ snow_cr }}"
+      tags:
+      - never
+      - sn_api
+      run_once: True

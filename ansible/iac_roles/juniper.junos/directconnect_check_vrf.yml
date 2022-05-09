@@ -1,0 +1,31 @@
+---
+- import_role:
+    name: Juniper.junos
+
+- name: "get {{ cust }} routing-instance data from {{ inventory_hostname }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+  juniper_junos_config:
+    config_mode: private
+    retrieve: "committed"
+    format: "xml"
+    filter: <routing-instances><instance><name>{{ cust }}</name></instance></routing-instances>
+  connection: netconf
+  register: vrf_data
+
+- name: "fail workflow if {{ cust }} routing-instance is not pre-provisioned on {{ inventory_hostname }}"
+  vars:
+    vrf_check: vrf_not_found
+  set_fact:
+    vrf: "{{ vrf_data.config_parsed.configuration['routing-instances'].instance.name|default(vrf_check) }}"
+  failed_when: vrf != cust
+
+- name: "get routing-instance {{ vrf }} route-distinguisher from {{ inventory_hostname }}"
+  set_fact:
+    RD: "{{ vrf_data.config_parsed.configuration['routing-instances'].instance['route-distinguisher']['rd-type'] }}"
+
+- name: "get routing-instance {{ vrf }} import route-target from {{ inventory_hostname }}"
+  set_fact:
+    RT: "{{ vrf_data.config_parsed.configuration['routing-instances'].instance['vrf-target']['import'] | replace('target:','') }}"
+

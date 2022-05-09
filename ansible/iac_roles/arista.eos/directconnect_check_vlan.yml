@@ -1,0 +1,19 @@
+---
+- name: check site specific device for new {{ dcc }} vid
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+    nb_vlan_bysite: "{{ lookup('vars', 'nb_vlan_' + node_id) }}"
+  eos_command:
+    commands: show vlan {{ nb_vlan_bysite }} | json
+  connection: network_cli
+  register: result
+
+- name: fail workflow if new site specific {{ dcc }} vid already exists on device
+  vars:
+    vid_avail: available
+    nb_vlan_bysite: "{{ lookup('vars', 'nb_vlan_' + node_id) }}"
+  set_fact:
+    vid_chk: "{{ (result.stdout[0].vlans|select('defined')|list|first)|default(vid_avail) }}"
+  failed_when: vid_chk == nb_vlan_bysite
+

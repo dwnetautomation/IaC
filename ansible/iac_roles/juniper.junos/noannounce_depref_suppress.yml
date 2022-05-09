@@ -1,0 +1,113 @@
+---
+- name: add_prefix_AWXSUPPRESS-COGENT-ALL
+  import_tasks: add_prefix_AWXSUPPRESS-COGENT-ALL.yml
+  tags:
+  - never
+  - ap_sca
+  - prfx
+  when: provider_group[0] == "suppress_cogent" and add_or_remove == "add"
+
+- name: del_prefix_AWXSUPPRESS-COGENT-ALL
+  import_tasks: del_prefix_AWXSUPPRESS-COGENT-ALL.yml
+  tags:
+  - never
+  - dp_sca
+  - prfx
+  when: provider_group[0] == "suppress_cogent" and add_or_remove == "remove"
+
+- name: add_prefix_AWXNOANNOUNCE-LLNW-NTT
+  import_tasks: add_prefix_AWXNOANNOUNCE-LLNW-NTT.yml
+  tags:
+  - never
+  - ap_naln
+  - prfx
+  when: provider_group[0] == "noannounce_llnw_ntt" and add_or_remove == "add"
+
+- name: del_prefix_AWXNOANNOUNCE-LLNW-NTT
+  import_tasks: del_prefix_AWXNOANNOUNCE-LLNW-NTT.yml
+  tags:
+  - never
+  - dp_naln
+  - prfx
+  when: provider_group[0] == "noannounce_llnw_ntt" and add_or_remove == "remove"
+
+- name: add_prefix_AWXNOANNOUNCE-LLNW
+  import_tasks: add_prefix_AWXNOANNOUNCE-LLNW.yml
+  tags:
+  - never
+  - ap_nal
+  - prfx
+  when: provider_group[0] == "noannounce_llnw" and add_or_remove == "add"
+
+- name: del_prefix_AWXNOANNOUNCE-LLNW
+  import_tasks: del_prefix_AWXNOANNOUNCE-LLNW.yml
+  tags:
+  - never
+  - dp_nal
+  - prfx
+  when: provider_group[0] == "noannounce_llnw" and add_or_remove == "remove"  
+
+- name: add_prefix_AWXNOANNOUNCE-NTT
+  import_tasks: add_prefix_AWXNOANNOUNCE-NTT.yml
+  tags:
+  - never
+  - ap_nan
+  - prfx
+  when: provider_group[0] == "noannounce_ntt" and add_or_remove == "add"
+
+- name: del_prefix_AWXNOANNOUNCE-NTT
+  import_tasks: del_prefix_AWXNOANNOUNCE-NTT.yml
+  tags:
+  - never
+  - dp_nan
+  - prfx
+  when: provider_group[0] == "noannounce_ntt" and add_or_remove == "remove"  
+
+- name: add_prefix_AWXDEPREF-LLNW-NTT
+  import_tasks: add_prefix_AWXDEPREF-LLNW-NTT.yml
+  tags:
+  - never
+  - ap_dpln
+  - prfx
+  when: provider_group[0] == "depref_llnw_ntt" and add_or_remove == "add"
+
+- name: del_prefix_AWXDEPREF-LLNW-NTT
+  import_tasks: del_prefix_AWXDEPREF-LLNW-NTT.yml
+  tags:
+  - never
+  - dp_dpln
+  - prfx
+  when: provider_group[0] == "depref_llnw_ntt" and add_or_remove == "remove"
+
+- name: add_prefix_AWXDEPREF-LLNW
+  import_tasks: add_prefix_AWXDEPREF-LLNW.yml
+  tags:
+  - never
+  - ap_dpl
+  - prfx
+  when: provider_group[0] == "depref_llnw" and add_or_remove == "add"
+
+- name: del_prefix_AWXDEPREF-LLNW
+  import_tasks: del_prefix_AWXDEPREF-LLNW.yml
+  tags:
+  - never
+  - dp_dpl
+  - prfx
+  when: provider_group[0] == "depref_llnw" and add_or_remove == "remove"
+
+- name: add_prefix_AWXDEPREF-NTT
+  import_tasks: add_prefix_AWXDEPREF-NTT.yml
+  tags:
+  - never
+  - ap_dpn
+  - prfx
+  when: provider_group[0] == "depref_ntt" and add_or_remove == "add"
+
+- name: del_prefix_AWXDEPREF-NTT
+  import_tasks: del_prefix_AWXDEPREF-NTT.yml
+  tags:
+  - never
+  - dp_dpn
+  - prfx
+  when: provider_group[0] == "depref_ntt" and add_or_remove == "remove"
+

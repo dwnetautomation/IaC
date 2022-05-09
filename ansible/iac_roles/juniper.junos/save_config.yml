@@ -1,0 +1,19 @@
+---
+- name: Save Junos config under field_config directory
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+  junos_config:
+    backup: true
+    src_format: set
+    backup_options:
+      dir_path: "{{ base_dir + '/field_config/' + node_id }}"
+      filename: "{{ inventory_hostname }}"
+  connection: netconf
+  when: ansible_network_os == "junos"
+  tags:
+  - never
+  - pUsh_cOnfIg
+  - chAnGe_ServIce_AccOunT_PassWord
+  - set_cmds
+  - dc_prov
