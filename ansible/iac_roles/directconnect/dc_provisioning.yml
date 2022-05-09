@@ -1,0 +1,104 @@
+---
+- block:
+  - name: launch - confirm gre {{ cust }} routing-instance exists on {{ inventory_hostname }} - get RD/RT - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+    import_tasks: ../../juniper.junos/tasks/directconnect_check_vrf.yml
+    when: ansible_network_os == "junos"
+    any_errors_fatal: true
+  when: prov is defined or chkvrf is defined
+- block:
+  - name: launch - get next available netbox customer vlan - {{ cust }} - {{ dcc }} - {{ node_id }}
+    include_tasks: ../../iac.common/tasks/dc_read_next_netbox_vlan.yml
+  - name: launch - check cas {{ inventory_hostname }} for pre-existing VID - {{ cust }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'  
+    import_tasks: ../../arista.eos/tasks/dc_cas_check_vlan.yml
+    when: ansible_network_os == "eos"
+    any_errors_fatal: true
+  - name: launch - check gre {{ inventory_hostname }} for pre-existing VID - {{ cust }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'  
+    import_tasks: ../../juniper.junos/tasks/directconnect_check_vlan.yml
+    when: ansible_network_os == "junos"
+    any_errors_fatal: true
+  when: prov is defined or chkvid is defined
+- block:
+  - name: launch - detect if gre {{ cust }} routing-instance bgp group exists on {{ inventory_hostname }} for ASN {{ dc_asn_bysite }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'
+    import_tasks: ../../juniper.junos/tasks/directconnect_check_asn.yml
+    when: ansible_network_os == "junos"
+    any_errors_fatal: true
+  when: prov is defined or chkasn is defined
+- block:
+  - name: launch - create next available netbox customer v4IP - {{ cust }} - {{ dcc }} - {{ node_id }}
+    include_tasks: ../../iac.common/tasks/dc_create_next_netbox_v4_pfx.yml
+  - name: launch - create next available netbox customer v6IP - {{ cust }} - {{ dcc }} - {{ node_id }}
+    include_tasks: ../../iac.common/tasks/dc_create_next_netbox_v6_pfx.yml
+  - name: launch - check gre {{ inventory_hostname }} for pre-existing v4IP - {{ cust }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'  
+    import_tasks: ../../juniper.junos/tasks/directconnect_check_ipv4.yml
+    when: ansible_network_os == "junos"
+    any_errors_fatal: true
+  - name: launch - check gre {{ inventory_hostname }} for pre-existing v6IP - {{ cust }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'  
+    import_tasks: ../../juniper.junos/tasks/directconnect_check_ipv6.yml
+    when: ansible_network_os == "junos"
+    any_errors_fatal: true
+  when: prov is defined or createchkips is defined
+- block:
+  - name: launch - update config cas {{ inventory_hostname }} - {{ cust }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'  
+    import_tasks: ../../arista.eos/tasks/dc_cas_add_vlan.yml
+    when: ansible_network_os == "eos"
+    any_errors_fatal: true
+  when: prov is defined or addcasvlan is defined
+- block:
+  - name: launch - update config gre {{ inventory_hostname }} for dcc - {{ cust }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'  
+    import_tasks: ../../juniper.junos/tasks/directconnect_j2update.yml
+    when: ansible_network_os == "junos"
+    any_errors_fatal: true
+  when: prov is defined or provgre is defined
+- block:
+  - name: launch - update netbox vlan record - {{ cust }} - {{ dcc }} - {{ node_id }}
+    include_tasks: ../../iac.common/tasks/dc_update_netbox_vlan.yml
+  when: prov is defined or updatenbvlan is defined
+- block:
+  - name: launch - add optional bgp auth key gre {{ inventory_hostname }} for vrf peer - {{ cust }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'  
+    import_tasks: ../../juniper.junos/tasks/directconnect_bgpauthkey.yml
+    when: ansible_network_os == "junos"
+  when: dc_authkey_bysite != ''
+- block:
+  - name: launch - add optional ipv4 prefix-list prefixes gre {{ inventory_hostname }} for vrf peer - {{ cust }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'  
+    import_tasks: ../../juniper.junos/tasks/directconnect_v4prefix.yml
+    when: ansible_network_os == "junos"
+  when: dc_v4pfxs_bysite != ''
+- block:
+  - name: launch - add optional ipv6 prefix-list prefixes gre {{ inventory_hostname }} for vrf peer - {{ cust }} - {{ dcc }} - {{ node_id }}
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o userknownhostsfile=/dev/null'  
+    import_tasks: ../../juniper.junos/tasks/directconnect_v6prefix.yml
+    when: ansible_network_os == "junos"
+  when: dc_v6pfxs_bysite != ''
+

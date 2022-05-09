@@ -1,0 +1,80 @@
+---
+- set_fact: prov=true
+  when: '"provision" is in dc_action'
+- set_fact: chkvrf=true
+  when: '"check_vrf" in dc_action or "check_vrf_and_vlan" in dc_action or "check_vrf_and_asn" in dc_action or "check_vrf_and_vlan_and_asn" in dc_action'
+- set_fact: chkvid=true
+  when: '"check_vlan" in dc_action or "check_vrf_and_vlan" in dc_action or "check_vrf_and_vlan_and_asn" in dc_action'
+- set_fact: chkasn=true
+  when: '"check_vrf_and_asn" in dc_action or "check_vrf_and_vlan_and_asn" in dc_action'
+
+- block:
+  - name: dc_launcher lab
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "lab"
+- block:
+  - name: dc_launcher sea
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "sea"
+- block:
+  - name: dc_launcher dal
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "dal"
+- block:
+  - name: dc_launcher stl
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "stl"
+- block:
+  - name: dc_launcher orl
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "orl"
+- block:
+  - name: dc_launcher mia
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "mia"
+- block:
+  - name: dc_launcher lab
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "lab"
+- block:
+  - name: dc_launcher lax
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "lax"
+- block:
+  - name: dc_launcher sjc
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "sjc"
+- block:
+  - name: dc_launcher pdx
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "pdx"
+- block:
+  - name: dc_launcher nyc
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "nyc"
+- block:
+  - name: dc_launcher log
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "log"
+- block:
+  - name: dc_launcher hou
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "hou"
+- block:
+  - name: dc_launcher jun
+    include_tasks: dc_provisioning.yml
+  any_errors_fatal: true
+  when: node_id == "jun"

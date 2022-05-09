@@ -1,0 +1,38 @@
+---
+- name: Import IaC Common role
+  import_role:
+    name: iac.common
+  tags:
+  - always
+
+- block:
+  - set_fact: dc_prov_tag=true
+    tags:
+    - never
+    - dc_prov
+  - name: dc_launcher
+    include_tasks: dc_launcher.yml
+    when: dc_prov_tag is defined
+  tags:
+  - never
+  - dc_prov
+
+- name: save arista config
+  import_tasks: ../../arista.eos/tasks/save_config.yml 
+  when: ansible_network_os == "eos"
+  tags:
+  - never
+  - dc_prov 
+
+- name: save juniper config
+  import_tasks: ../../juniper.junos/tasks/save_config.yml
+  when: ansible_network_os == "junos"
+  tags:
+  - never
+  - dc_prov
+
+- name: Sanitize device config file
+  import_tasks: ../../iac.common/tasks/remove_sensitive_info_from_config_file.yml
+  tags:
+  - never
+  - dc_prov
