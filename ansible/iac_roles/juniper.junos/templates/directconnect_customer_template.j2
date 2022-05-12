@@ -1,0 +1,84 @@
+set interfaces {{ dc_mlag }} unit {{ nb_vlan_bysite }} description sp_{{ cust }}_directconnect-te_awx_{{ dcc }}
+set interfaces {{ dc_mlag }} unit {{ nb_vlan_bysite }} vlan-id {{ nb_vlan_bysite }}
+set interfaces {{ dc_mlag }} unit {{ nb_vlan_bysite }} family inet address {{ nb_v4px_bysite }}
+set interfaces {{ dc_mlag }} unit {{ nb_vlan_bysite }} family inet6 address {{ nb_v6px_bysite }}
+set routing-instances {{ cust }} interface {{ dc_mlag }}.{{ nb_vlan_bysite }}
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} neighbor {{ nb_v4peer_bysite }}
+{%- if vrf_bgp_group is "not_found" %}
+set policy-options prefix-list {{ cust }}-{{ dc_asn_bysite }}
+set policy-options prefix-list {{ cust }}-v6-{{ dc_asn_bysite }}
+set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-{{ dc_asn_bysite }}-in from family inet
+set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-{{ dc_asn_bysite }}-in from protocol bgp
+set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-{{ dc_asn_bysite }}-in from prefix-list-filter {{ cust }}-{{ dc_asn_bysite }} orlonger
+set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-{{ dc_asn_bysite }}-in then next policy
+set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-v6-{{ dc_asn_bysite }}-in from family inet6
+set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-v6-{{ dc_asn_bysite }}-in from protocol bgp
+set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-v6-{{ dc_asn_bysite }}-in from prefix-list-filter {{ cust }}-v6-{{ dc_asn_bysite }} orlonger
+set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-v6-{{ dc_asn_bysite }}-in then next policy
+set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in then reject
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} type external
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} advertise-inactive
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} mtu-discovery
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} import bogons
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} import customersrcblackhole
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} import {{ cust }}-{{ dc_asn_bysite }}-in
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} import customer-bgp-in
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} family inet unicast prefix-limit maximum 1000
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} family inet unicast prefix-limit teardown 80
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} family inet unicast prefix-limit teardown idle-timeout 10
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} export reject-all
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} remove-private
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} peer-as {{ dc_asn_bysite }}
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} multipath
+set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} neighbor {{ nb_v4peer_bysite }}
+{% else %}
+    {%- if vrf_bgp_policy_v4pfx is "not_found" %}
+    set policy-options prefix-list {{ cust }}-{{ dc_asn_bysite }}
+    {% endif %}
+    {%- if vrf_bgp_policy_v6pfx is "not_found" %}
+    set policy-options prefix-list {{ cust }}-v6-{{ dc_asn_bysite }}
+    {% endif %}
+    {%- if vrf_bgp_policy is "not_found" %}
+    set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-{{ dc_asn_bysite }}-in from family inet
+    set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-{{ dc_asn_bysite }}-in from protocol bgp
+    set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-{{ dc_asn_bysite }}-in from prefix-list-filter {{ cust }}-{{ dc_asn_bysite }} orlonger
+    set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-{{ dc_asn_bysite }}-in then next policy
+    set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-v6-{{ dc_asn_bysite }}-in from family inet6
+    set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-v6-{{ dc_asn_bysite }}-in from protocol bgp
+    set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-v6-{{ dc_asn_bysite }}-in from prefix-list-filter {{ cust }}-v6-{{ dc_asn_bysite }} orlonger
+    set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in term {{ cust }}-v6-{{ dc_asn_bysite }}-in then next policy
+    set policy-options policy-statement {{ cust }}-{{ dc_asn_bysite }}-in then reject
+    {% endif %}
+    {%- if vrf_bgp_group_type is "not_found" %}
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} type external
+    {% endif %}
+    {%- if vrf_bgp_group_advertise_inactive is "not_found" %}
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} advertise-inactive
+    {% endif %}
+    {%- if vrf_bgp_group_mtu_discovery is "not_found" %}
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} mtu-discovery
+    {% endif %}
+    {%- if vrf_bgp_group_import is "not_found" %}
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} import bogons
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} import customersrcblackhole
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} import {{ cust }}-{{ dc_asn_bysite }}-in
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} import customer-bgp-in
+    {% endif %}
+    {%- if vrf_bgp_group_pfxlimit is "not_found" %}
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} family inet unicast prefix-limit maximum 1000
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} family inet unicast prefix-limit teardown 80
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} family inet unicast prefix-limit teardown idle-timeout 10
+    {% endif %}
+    {%- if vrf_bgp_group_export is "not_found" %}
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} export reject-all
+    {% endif %}
+    {%- if vrf_bgp_group_rmpriv is "not_found" %}
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} remove-private
+    {% endif %}
+    {%- if vrf_bgp_group_peeras is "not_found" %}
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} peer-as {{ dc_asn_bysite }}
+    {% endif %}
+    {%- if vrf_bgp_group_multipath is "not_found" %}
+    set routing-instances {{ cust }} protocols bgp group {{ cust }}-{{ dc_asn_bysite }} multipath
+    {% endif %}
+{% endif %}

@@ -23,7 +23,7 @@
     format: set
     diff: yes
     dest_dir: "{{ base_dir }}/directconnect_configs/{{ node_id }}/{{ dcc }}_{{ cust }}"
-    template: "{{ role_path }}/templates/dc_gre_cust_template.j2"
+    template: "{{ role_path }}/templates/directconnect_customer_template.j2"
     vars:
       cust: "{{ cust }}"
       dcc: "{{ dcc }}"
